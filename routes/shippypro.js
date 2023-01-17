@@ -4,7 +4,10 @@ let shippypro;
 let deps = {};
 
 function init(server, { middlewares, helpers } = {}) {
-	const { checkPermissions, restifyAuthorizationParser } = middlewares;
+	const {
+		checkPermissions,
+		// restifyAuthorizationParser
+	} = middlewares;
 	const { wrapAction, getRequestContext } = helpers;
 
 	server.post(
@@ -32,7 +35,7 @@ function init(server, { middlewares, helpers } = {}) {
 			path: '/integrations/shippypro/webhooks/:publicPlatformId',
 			manualAuth: true,
 		},
-		restifyAuthorizationParser,
+		// restifyAuthorizationParser,
 		wrapAction(async (req, res) => {
 			const { publicPlatformId } = req.params;
 			const shippyproSignature = req.headers['shippypro-signature'];
