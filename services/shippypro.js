@@ -1,6 +1,6 @@
-const ShippyPro = require('shippypro');
 const debug = require('debug')('stelace:integrations:shippypro');
 const _ = require('lodash');
+const axios = require('axios');
 const { parsePublicPlatformId } = require('stelace-util-keys');
 
 module.exports = function createService(deps) {
@@ -24,25 +24,31 @@ module.exports = function createService(deps) {
 			access: 'private',
 		});
 
-		const { secretApiKey } = _.get(
+		const { KEY, URI } = _.get(
 			privateConfig,
 			'stelace.integrations.shippypro',
 			{},
 		);
-		if (!secretApiKey)
-			throw createError(403, 'ShippyPro secret API key not configured');
+		if (!KEY) throw createError(403, 'ShippyPro API key not configured');
 
-		const shippypro = ShippyPro(secretApiKey);
+		// const shippypro = ShippyPro(secretApiKey);
 
-		if (typeof _.get(shippypro, method) !== 'function') {
-			throw createError(400, 'ShippyPro method not found', {
-				public: { method },
-			});
-		}
+		// if (typeof _.get(shippypro, method) !== 'function') {
+		// 	throw createError(400, 'ShippyPro method not found', {
+		// 		public: { method },
+		// 	});
+		// }
 
 		try {
-			// awaiting to handle error in catch block
-			return await _.invoke(shippypro, method, ...args); // promise
+			return await axios.post(
+				URI,
+				{ Method: method, Params: args[0] },
+				{
+					auth: {
+						username: KEY,
+					},
+				},
+			);
 		} catch (err) {
 			const errorMessage = 'ShippyPro error';
 			const errObject = { expose: true };
@@ -62,7 +68,7 @@ module.exports = function createService(deps) {
 
 	async function webhook({
 		_requestId,
-		shippyproSignature,
+		// shippyproSignature,
 		rawBody,
 		publicPlatformId,
 	}) {
@@ -72,8 +78,9 @@ module.exports = function createService(deps) {
 			parsePublicPlatformId(publicPlatformId);
 		if (!hasValidFormat) throw createError(403);
 
-		if (_.isEmpty(rawBody))
+		if (_.isEmpty(rawBody)) {
 			throw createError(400, 'Event object body expected');
+		}
 
 		const req = {
 			_requestId,
@@ -86,33 +93,27 @@ module.exports = function createService(deps) {
 			access: 'private',
 		});
 
-		const { secretApiKey, webhookSecret } = _.get(
+		const { KEY } = _.get(
 			privateConfig,
 			'stelace.integrations.shippypro',
 			{},
 		);
-		if (!secretApiKey)
+		if (!KEY) {
 			throw createError(403, 'ShippyPro API key not configured');
-		if (!webhookSecret)
-			throw createError(403, 'ShippyPro Webhook secret not configured');
-
-		const shippypro = ShippyPro(secretApiKey);
+		}
 
 		let event;
 
-		// Verify ShippyPro webhook signature
-		// https://shippypro.com/docs/webhooks/signatures
-		try {
-			event = shippypro.webhooks.constructEvent(
-				rawBody,
-				shippyproSignature,
-				webhookSecret,
-			);
-		} catch (err) {
-			throw createError(403);
-		}
+		// try {
+		// 	event = shippypro.webhooks.constructEvent(
+		// 		rawBody,
+		// 		shippyproSignature,
+		// 		webhookSecret,
+		// 	);
+		// } catch (err) {
+		// 	throw createError(403);
+		// }
 
-		// prefix prevents overlapping with other event types
 		const type = `shippypro_${event.type}`;
 		const params = {
 			type,
@@ -132,7 +133,6 @@ module.exports = function createService(deps) {
 		});
 
 		// ShippyPro webhooks may send same events multiple times
-		// https://shippypro.com/docs/webhooks/best-practices#duplicate-events
 		if (sameEvents.length) {
 			debug(
 				'ShippyPro integration: idempotency check with event id: %O',
@@ -145,10 +145,8 @@ module.exports = function createService(deps) {
 			env,
 			method: 'POST',
 			payload: {
-				// https://shippypro.com/docs/api/events/types
-				// No ShippyPro event name currently has two underscores '__', which would cause an error
 				type,
-				objectId: event.id, // just a convention to easily retrieve events, objectId being indexed
+				objectId: event.id,
 				emitterId: 'shippypro',
 				metadata: event,
 			},
