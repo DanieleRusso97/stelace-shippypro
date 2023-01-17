@@ -8,13 +8,23 @@ module.exports = function createService(deps) {
 		createError,
 		communication: { stelaceApiRequest },
 
+		getCurrentUserId,
 		configRequester,
+		transactionRequester,
 	} = deps;
 
 	return {
 		sendRequest,
 		webhook,
 	};
+
+	async function _getTransaction(req, transactionId) {
+		const transaction = await transactionRequester.communicate(req)({
+			type: 'read',
+			transactionId: transactionId,
+		});
+		return transaction;
+	}
 
 	async function sendRequest(req) {
 		const { env, method, args = [{}] } = req;
@@ -38,6 +48,25 @@ module.exports = function createService(deps) {
 		// 		public: { method },
 		// 	});
 		// }
+		const params = args[0];
+		const currentUser = getCurrentUserId(req);
+
+		const allowedMethods = ['GetRates', 'Ship'];
+
+		const transactionId = params.TransactionID || undefined;
+		const transaction = await _getTransaction(req, transactionId);
+
+		if (!req._matchedPermissions['integrations:read_write:shippypro']) {
+			if (!allowedMethods.includes(method)) throw createError(403);
+
+			if (transaction) {
+				if (method === 'Ship') {
+					if (currentUser !== transaction.ownerId) {
+						throw createError(403);
+					}
+				}
+			}
+		}
 
 		try {
 			return (

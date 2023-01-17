@@ -63,17 +63,24 @@ function start(startParams) {
 		key: 'config',
 	});
 
+	const transactionRequester = getRequester({
+		name: 'Shippypro service > Transaction Requester',
+		key: 'transaction',
+	});
+
 	Object.assign(deps, {
 		configRequester,
+		transactionRequester,
 	});
 
 	shippypro = createService(deps);
 }
 
 function stop() {
-	const { configRequester } = deps;
+	const { configRequester, transactionRequester } = deps;
 
 	configRequester.close();
+	transactionRequester.close();
 
 	deps = null;
 }
