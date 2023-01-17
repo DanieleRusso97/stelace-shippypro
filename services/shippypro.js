@@ -40,15 +40,17 @@ module.exports = function createService(deps) {
 		// }
 
 		try {
-			return await axios.post(
-				URI,
-				{ Method: method, Params: args[0] },
-				{
-					auth: {
-						username: KEY,
+			return (
+				await axios.post(
+					URI,
+					{ Method: method, Params: args[0] },
+					{
+						auth: {
+							username: KEY,
+						},
 					},
-				},
-			);
+				)
+			).data;
 		} catch (err) {
 			const errorMessage = 'ShippyPro error';
 			const errObject = { expose: true };
