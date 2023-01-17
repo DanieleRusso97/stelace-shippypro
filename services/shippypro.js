@@ -68,7 +68,7 @@ module.exports = function createService(deps) {
 
 	async function webhook({
 		_requestId,
-		// shippyproSignature,
+		shippyproSignature,
 		rawBody,
 		publicPlatformId,
 	}) {
@@ -93,7 +93,7 @@ module.exports = function createService(deps) {
 			access: 'private',
 		});
 
-		const { KEY } = _.get(
+		const { KEY, WEBHOOK_KEY } = _.get(
 			privateConfig,
 			'stelace.integrations.shippypro',
 			{},
@@ -101,20 +101,20 @@ module.exports = function createService(deps) {
 		if (!KEY) {
 			throw createError(403, 'ShippyPro API key not configured');
 		}
+		if (!WEBHOOK_KEY) {
+			throw createError(403, 'ShippyPro WEBHOOK key not configured');
+		}
 
-		let event;
+		if (WEBHOOK_KEY !== shippyproSignature) {
+			throw createError(403);
+		}
 
-		// try {
-		// 	event = shippypro.webhooks.constructEvent(
-		// 		rawBody,
-		// 		shippyproSignature,
-		// 		webhookSecret,
-		// 	);
-		// } catch (err) {
-		// 	throw createError(403);
-		// }
+		const event = {
+			id: req._requestId,
+			...rawBody,
+		};
 
-		const type = `shippypro_${event.type}`;
+		const type = `shippypro_${event.Event}`;
 		const params = {
 			type,
 			orderBy: 'createdDate',

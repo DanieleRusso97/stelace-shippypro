@@ -35,12 +35,12 @@ function init(server, { middlewares, helpers } = {}) {
 		restifyAuthorizationParser,
 		wrapAction(async (req, res) => {
 			const { publicPlatformId } = req.params;
-			// const shippyproSignature = req.headers['shippypro-signature'];
+			const shippyproSignature = req.headers['shippypro-signature'];
 
 			return shippypro.webhook({
 				_requestId: req._requestId,
 				publicPlatformId,
-				// shippyproSignature,
+				shippyproSignature,
 				rawBody: req.rawBody,
 				deps,
 			});
