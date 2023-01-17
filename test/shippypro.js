@@ -19,15 +19,15 @@ const tunnel = {
   authToken: process.env.NGROK_AUTH_TOKEN
 }
 
-// perform Stripe tests only if the secret API key is provided
+// perform ShippyPro tests only if the secret API key is provided
 if (!secretApiKey) {
-  test('No Stripe tests', async (t) => {
+  test('No ShippyPro tests', async (t) => {
     t.pass()
   })
 } else {
   test.before(async t => {
     await before({
-      name: 'stelaceStripe'
+      name: 'stelaceShippyPro'
     })(t)
     await beforeEach()(t)
 
@@ -38,7 +38,7 @@ if (!secretApiKey) {
       .send({
         stelace: {
           integrations: {
-            stripe: {
+            shippypro: {
               secretApiKey
             }
           }
@@ -52,21 +52,21 @@ if (!secretApiKey) {
       .expect(200)
   })
 
-  test('stripe request works and webhook is triggered', async (t) => {
+  test('shippypro request works and webhook is triggered', async (t) => {
     const authorizationHeaders = await getAccessTokenHeaders({
       t,
       permissions: [
-        'integrations:read_write:stripe',
+        'integrations:read_write:shippypro',
         'event:list:all',
       ]
     })
 
-    const webhookUrl = `/integrations/stripe/webhooks/e${t.context.platformId}_${t.context.env}`
+    const webhookUrl = `/integrations/shippypro/webhooks/e${t.context.platformId}_${t.context.env}`
     let webhook
 
     const createWebhook = async (tunnelUrl) => {
       const { body: w } = await request(t.context.serverUrl)
-        .post('/integrations/stripe/request')
+        .post('/integrations/shippypro/request')
         .send({
           method: 'webhookEndpoints.create',
           args: {
@@ -82,7 +82,7 @@ if (!secretApiKey) {
 
     const removeWebhook = async () => {
       await request(t.context.serverUrl)
-        .post('/integrations/stripe/request')
+        .post('/integrations/shippypro/request')
         .send({
           method: 'webhookEndpoints.del',
           args: webhook.id
@@ -113,7 +113,7 @@ if (!secretApiKey) {
       await webhookManager.updatePrivateConfig({
         stelace: {
           integrations: {
-            stripe: {
+            shippypro: {
               webhookSecret: webhook.secret
             }
           }
@@ -121,7 +121,7 @@ if (!secretApiKey) {
       })
 
       const { body: customer } = await request(t.context.serverUrl)
-        .post('/integrations/stripe/request')
+        .post('/integrations/shippypro/request')
         .send({
           method: 'customers.create',
           args: {
@@ -134,7 +134,7 @@ if (!secretApiKey) {
         .expect(200)
 
       const { body: product } = await request(t.context.serverUrl)
-        .post('/integrations/stripe/request')
+        .post('/integrations/shippypro/request')
         .send({
           method: 'products.create',
           args: {
@@ -148,7 +148,7 @@ if (!secretApiKey) {
         .expect(200)
 
       await request(t.context.serverUrl)
-        .post('/integrations/stripe/request')
+        .post('/integrations/shippypro/request')
         .send({
           method: 'products.del',
           args: product.id
@@ -157,7 +157,7 @@ if (!secretApiKey) {
         .expect(200)
 
       await request(t.context.serverUrl)
-        .post('/integrations/stripe/request')
+        .post('/integrations/shippypro/request')
         .send({
           method: 'customers.del',
           args: customer.id
@@ -172,11 +172,11 @@ if (!secretApiKey) {
         .set(authorizationHeaders)
         .expect(200)
 
-      // 'stripe' prefix added to event type
-      const createdCustomerEvent = events.find(e => e.type === 'stripe_customer.created')
-      const deletedCustomerEvent = events.find(e => e.type === 'stripe_customer.deleted')
-      const createdProductEvent = events.find(e => e.type === 'stripe_product.created')
-      const deletedProductEvent = events.find(e => e.type === 'stripe_product.deleted')
+      // 'shippypro' prefix added to event type
+      const createdCustomerEvent = events.find(e => e.type === 'shippypro_customer.created')
+      const deletedCustomerEvent = events.find(e => e.type === 'shippypro_customer.deleted')
+      const createdProductEvent = events.find(e => e.type === 'shippypro_product.created')
+      const deletedProductEvent = events.find(e => e.type === 'shippypro_product.deleted')
 
       t.truthy(createdCustomerEvent)
       t.truthy(deletedCustomerEvent)

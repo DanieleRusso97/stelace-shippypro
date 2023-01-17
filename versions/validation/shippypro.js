@@ -22,11 +22,11 @@ module.exports = function createValidation (deps) {
   const validationVersions = {
     '2019-05-20': [
       {
-        target: 'stripe.pluginRequest',
+        target: 'shippypro.pluginRequest',
         schema: schemas['2019-05-20'].request
       },
       {
-        target: 'stripe.webhooks',
+        target: 'shippypro.webhooks',
         schema: schemas['2019-05-20'].webhook
       }
     ]

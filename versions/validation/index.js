@@ -1,5 +1,5 @@
 const validationVersions = [
-  require('./stripe')
+  require('./shippypro')
 ]
 
 module.exports = validationVersions

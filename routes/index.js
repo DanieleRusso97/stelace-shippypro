@@ -1,3 +1,3 @@
 module.exports = {
-  stripe: require('./stripe')
+  shippypro: require('./shippypro')
 }
