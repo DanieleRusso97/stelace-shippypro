@@ -17,7 +17,7 @@ function init(server, { middlewares, helpers } = {}) {
 		},
 		checkPermissions([
 			'integrations:read_write:shippypro',
-			'integrations:read_write:all', // does not currently exist
+			'transaction:create',
 		]),
 		wrapAction(async (req, res) => {
 			let ctx = getRequestContext(req);
