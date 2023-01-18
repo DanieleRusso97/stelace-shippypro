@@ -1,7 +1,7 @@
 {
-	"name": "stelace-shippypro",
+	"name": "stelace-mangopay",
 	"version": "0.1.0",
-	"description": "Stelace server wrapper plugin for ShippyPro",
+	"description": "Stelace server wrapper plugin for Stripe",
 	"license": "GPL-3.0",
 	"private": true,
 	"main": "index.js",
@@ -16,7 +16,7 @@
 		"plugins:server": "shx cp .env ./node_modules/stelace-server/.env && cross-env STELACE_PLUGINS_PATHS=$(shx pwd) npm explore stelace-server -- yarn plugins"
 	},
 	"dependencies": {
-		"axios": "^1.2.2",
+		"axios": "^1.2.3",
 		"debug": "^4.1.1",
 		"lodash": "4.17.19",
 		"stelace-util-keys": "https://github.com/stelace/stelace-util-keys.git#3.0.1"
@@ -40,7 +40,7 @@
 		"tap-xunit": "^2.4.1"
 	},
 	"engines": {
-		"node": "^14"
+		"node": ">=12.14"
 	},
 	"husky": {
 		"hooks": {
