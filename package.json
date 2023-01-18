@@ -16,7 +16,7 @@
 		"plugins:server": "shx cp .env ./node_modules/stelace-server/.env && cross-env STELACE_PLUGINS_PATHS=$(shx pwd) npm explore stelace-server -- yarn plugins"
 	},
 	"dependencies": {
-		"axios": "^1.2.3",
+		"axios": "^0.27.2",
 		"debug": "^4.1.1",
 		"lodash": "4.17.19",
 		"stelace-util-keys": "https://github.com/stelace/stelace-util-keys.git#3.0.1"
