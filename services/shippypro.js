@@ -53,8 +53,12 @@ module.exports = function createService(deps) {
 
 		const allowedMethods = ['GetRates', 'Ship'];
 
-		const transactionId = params.TransactionID || undefined;
-		const transaction = await _getTransaction(req, transactionId);
+		let transaction;
+
+		if (params.TransactionID) {
+			const transactionId = params.TransactionID || undefined;
+			transaction = await _getTransaction(req, transactionId);
+		}
 
 		if (!req._matchedPermissions['integrations:read_write:shippypro']) {
 			if (!allowedMethods.includes(method)) throw createError(403);
