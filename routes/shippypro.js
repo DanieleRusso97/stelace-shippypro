@@ -68,19 +68,26 @@ function start(startParams) {
 		key: 'transaction',
 	});
 
+	const userRequester = getRequester({
+		name: 'Shippypro service > User Requester',
+		key: 'user',
+	});
+
 	Object.assign(deps, {
 		configRequester,
 		transactionRequester,
+		userRequester,
 	});
 
 	shippypro = createService(deps);
 }
 
 function stop() {
-	const { configRequester, transactionRequester } = deps;
+	const { configRequester, transactionRequester, userRequester } = deps;
 
 	configRequester.close();
 	transactionRequester.close();
+	userRequester.close();
 
 	deps = null;
 }
