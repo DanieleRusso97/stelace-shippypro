@@ -105,7 +105,7 @@ module.exports = function createService(deps) {
 		const currentUser = getCurrentUserId(req);
 		console.log('curr user: ', currentUser);
 
-		const allowedMethods = ['Ship'];
+		const allowedMethods = ['Ship', 'GetRates'];
 
 		console.log('hereeeee logged shippypro');
 		if (
@@ -325,6 +325,96 @@ module.exports = function createService(deps) {
 					throw createError(400, 'Transaction does not have address');
 				}
 			}
+		}
+
+		if (method === 'GetRates') {
+			/*
+				args = [
+					{
+						asset: asset,
+						carrier: carrier,
+						toAddress: toAddress,
+					}
+				]
+			*/
+			const params = args[0];
+
+			if (!params.asset || !params.carrier || !params.toAddress) {
+				throw createError(400, 'Mangopay args not acceptable');
+			}
+
+			const asset = params.asset;
+			const carrier = params.carrier;
+			const toAddress = params.toAddress;
+
+			const owner = await _getUser(req, asset.ownerId);
+
+			const carrierPricing = config.custom.shipping[carrier].pricing;
+			const carrierPricingInfo = carrierPricing.find(
+				packSize => packSize.size === asset.metadata.packagingSize,
+			);
+
+			const ownerAddress =
+				_.get(
+					owner,
+					'platformData._private.verified.individualInfo.address',
+				) ||
+				_.get(
+					owner,
+					'platformData._private.verified.companyInfo.address',
+				);
+
+			const shippingInfo = {
+				from_address: {
+					name: owner.firstname + ' ' + owner.lastname,
+					company:
+						_.get(
+							owner,
+							'platformData._private.verified.companyInfo.businessName',
+						) || '',
+					state: '',
+					country: ownerAddress.country || 'IT',
+					city: ownerAddress.city,
+					email: owner.email || owner.username,
+					phone: _.get(
+						owner,
+						'platformData._private.verified.individualInfo.phone',
+					),
+					zip: ownerAddress.zip,
+					street1:
+						ownerAddress.address + ' ' + ownerAddress.streetNumber,
+					street2: ownerAddress.address2 || '',
+				},
+				to_address: {
+					name: `taker ${asset.name.slice(0, 60)}`,
+					company: '',
+					state: '',
+					country: toAddress.Country || 'IT',
+					city: toAddress.City,
+					email: 'taker@babywanted.it',
+					phone: '3333333333',
+					zip: toAddress.PostalCode,
+					street1: toAddress.AddressLine1 || '',
+					street2: toAddress.AddressLine2 || ''
+				},
+				parcels: [carrierPricingInfo.dimensions],
+				Insurance: 0,
+				InsuranceCurrency: 'EUR',
+				CashOnDelivery: 0,
+				CashOnDeliveryCurrency: 'EUR',
+				ContentDescription: asset.name.slice(0, 250),
+				ShippingService: 'Standard'
+			};
+
+			const shippingRates = await _invokeShippypro(
+				URI,
+				KEY,
+				'GetRates',
+				{ ...shippingInfo, ShippingService: 'Standard' },
+				env,
+			);
+
+			return shippingRates.Rates.find(rate => rate.carrier === carrier);
 		}
 
 		if (req._matchedPermissions['integrations:read_write:shippypro']) {
